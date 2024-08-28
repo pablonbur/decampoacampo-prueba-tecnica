@@ -1,0 +1,68 @@
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker Compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
+
+# Here the instructions define your application as a service called "server".
+# This service is built from the Dockerfile in the current directory.
+# You can add other services your application may depend on here, such as a
+# database or a cache. For examples, see the Awesome Compose repository:
+# https://github.com/docker/awesome-compose
+
+name: decampoacampo-prueba-tecnica # ${COMPOSE_PROJECT_NAME}
+
+services:
+  app:
+    container_name: app_container
+    build:
+      context: ./app
+    ports:
+      - 9000:80
+    volumes:
+      - ./app:/var/www/html
+    depends_on:
+      - db_mysql
+    environment:
+      PRECIO_USD: 949.75
+      #KEY: '' # Key de la API de Exchange-rate, para DolarController
+      # Entiendo que por una cuestión de seguridad/ambientes probablemente deba ir en un .env, pero me pareció interesante utilizar el env de Docker para este ejemplo sencillo.
+      HOST: db_mysql #${MYSQL_HOST}
+      DBNAME: 'decampoacampo'
+      CHARSET: 'utf8mb4'
+      USERNAME: 'root'
+      PASSWORD: '27122001' #${MYSQL_ROOT_PASSWORD}
+
+
+
+  db_mysql:
+    container_name: db_mysql_container
+    image: mysql:8.4
+    restart: always
+    ports:
+      # <Port exposed> : <MySQL Port running inside container>
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '27122001' #${MYSQL_ROOT_PASSWORD}
+    expose:
+      # Opens port 3306 on the container
+      - '3306'
+      # Where our data will be persisted
+    volumes:
+      - db_mysql_data:/var/lib/mysql
+      - ./app/config/init_productos.sql:/docker-entrypoint-initdb.d/init_productos.sql
+
+  phpmyadmin:
+    container_name: phpmyadmin_container
+    image: phpmyadmin:latest
+    restart: always
+    environment:
+      PMA_HOST: db_mysql #${MYSQL_HOST}
+      MYSQL_ROOT_PASSWORD: '27122001' #${MYSQL_ROOT_PASSWORD}
+    ports:
+      - 8080:80
+    depends_on:
+      - db_mysql
+
+volumes:
+  db_mysql_data:
+
+
